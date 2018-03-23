@@ -15,7 +15,7 @@ typedef struct _image {
 int max(int a, int b);
 int is_equal_pixel(Pixel p1, Pixel p2);
 Image gray_scale(Image img);
-Image blur(Image img, int T);
+Image blur(Image img, int size);
 Image rotate_to_right(Image img);
 Image colors_reversed(Image img);
 Image image_cut(Image img, int x, int y, int w, int h);
@@ -26,6 +26,7 @@ void record_image(Image img);
 
 int main() {
     int option, n_options, size, rotations, horizontal;
+
     Image img = read_image(img);
 
     scanf("%d", &n_options);
@@ -103,24 +104,26 @@ Image read_image(Image img){
 }
 
 Image sepia_filter(Image img){
+  Pixel pixel;
+  int p, min_r;
+
   for (unsigned int x = 0; x < img.h; ++x) {
       for (unsigned int j = 0; j < img.w; ++j) {
-          unsigned short int pixel[3];
-          pixel[0] = img.pixel[x][j].r;
-          pixel[1] = img.pixel[x][j].g;
-          pixel[2] = img.pixel[x][j].b;
+          pixel.r = img.pixel[x][j].r;
+          pixel.g = img.pixel[x][j].g;
+          pixel.b = img.pixel[x][j].b;
 
-          int p =  pixel[0] * .393 + pixel[1] * .769 + pixel[2] * .189;
-          int menor_r = (255 >  p) ? p : 255;
-          img.pixel[x][j].r = menor_r;
+          p =  pixel.r * .393 + pixel.g * .769 + pixel.b * .189;
+          min_r = (255 >  p) ? p : 255;
+          img.pixel[x][j].r = min_r;
 
-          p =  pixel[0] * .349 + pixel[1] * .686 + pixel[2] * .168;
-          menor_r = (255 >  p) ? p : 255;
-          img.pixel[x][j].g = menor_r;
+          p =  pixel.r * .349 + pixel.g * .686 + pixel.b * .168;
+          min_r = (255 >  p) ? p : 255;
+          img.pixel[x][j].g = min_r;
 
-          p =  pixel[0] * .272 + pixel[1] * .534 + pixel[2] * .131;
-          menor_r = (255 >  p) ? p : 255;
-          img.pixel[x][j].b = menor_r;
+          p =  pixel.r * .272 + pixel.g * .534 + pixel.b * .131;
+          min_r = (255 >  p) ? p : 255;
+          img.pixel[x][j].b = min_r;
       }
   }
   return img;
@@ -128,29 +131,29 @@ Image sepia_filter(Image img){
 
 Image mirroring(Image img, int horizontal){
   int w = img.w, h = img.h, x, y;
-  Pixel aux1;
+  Pixel aux;
 
   if (horizontal == 1) w /= 2;
   else h /= 2;
 
-  for (int i2 = 0; i2 < h; ++i2) {
+  for (int i = 0; i < h; ++i) {
       for (int j = 0; j < w; ++j) {
-          x = i2, y = j;
+          x = i, y = j;
 
           if (horizontal == 1) y = img.w - 1 - j;
-          else x = img.h - 1 - i2;
+          else x = img.h - 1 - i;
 
-          aux1.r = img.pixel[i2][j].r;
-          aux1.g = img.pixel[i2][j].g;
-          aux1.b = img.pixel[i2][j].b;
+          aux.r = img.pixel[i][j].r;
+          aux.g = img.pixel[i][j].g;
+          aux.b = img.pixel[i][j].b;
 
-          img.pixel[i2][j].r = img.pixel[x][y].r;
-          img.pixel[i2][j].g = img.pixel[x][y].g;
-          img.pixel[i2][j].b = img.pixel[x][y].b;
+          img.pixel[i][j].r = img.pixel[x][y].r;
+          img.pixel[i][j].g = img.pixel[x][y].g;
+          img.pixel[i][j].b = img.pixel[x][y].b;
 
-          img.pixel[x][y].r = aux1.r;
-          img.pixel[x][y].g = aux1.g;
-          img.pixel[x][y].b = aux1.b;
+          img.pixel[x][y].r = aux.r;
+          img.pixel[x][y].g = aux.g;
+          img.pixel[x][y].b = aux.b;
       }
   }
   return img;
@@ -159,6 +162,7 @@ Image mirroring(Image img, int horizontal){
 void record_image(Image img){
   // print type of image
   printf("P3\n");
+
   // print width height and color of image
   printf("%u %u\n255\n", img.w, img.h);
 
@@ -168,7 +172,6 @@ void record_image(Image img){
           printf("%hu %hu %hu ", img.pixel[i][j].r,
                                  img.pixel[i][j].g,
                                  img.pixel[i][j].b);
-
       }
       printf("\n");
   }
@@ -181,6 +184,12 @@ int max(int a, int b) {
     return b;
 }
 
+// int min(int a, int b) {
+//     if (a < b)
+//         return a;
+//     return b;
+// }
+
 int is_equal_pixel(Pixel p1, Pixel p2) {
     if (p1.r == p2.r &&
         p1.g == p2.g &&
@@ -191,70 +200,73 @@ int is_equal_pixel(Pixel p1, Pixel p2) {
 
 
 Image gray_scale(Image img) {
+    int average;
+
     for (unsigned int i = 0; i < img.h; ++i) {
         for (unsigned int j = 0; j < img.w; ++j) {
-            int media = img.pixel[i][j].r +
-                        img.pixel[i][j].g +
-                        img.pixel[i][j].b;
-            media /= 3;
-            img.pixel[i][j].r = media;
-            img.pixel[i][j].g = media;
-            img.pixel[i][j].b = media;
+            average = img.pixel[i][j].r +
+                      img.pixel[i][j].g +
+                      img.pixel[i][j].b;
+
+            average /= 3;
+
+            img.pixel[i][j].r = average;
+            img.pixel[i][j].g = average;
+            img.pixel[i][j].b = average;
         }
     }
-
     return img;
 }
 
-Image blur(Image img, int T) {
+Image blur(Image img, int size) {
+    int min_h, min_w;
+    //Pixel average;
+
     for (unsigned int i = 0; i < img.h; ++i) {
         for (unsigned int j = 0; j < img.w; ++j) {
-            Pixel media = {0, 0, 0};
+            Pixel average = {0, 0, 0};
 
-            int menor_h = (img.h - 1 > i + T/2) ? i + T/2 : img.h - 1;
-            int min_w = (img.w - 1 > j + T/2) ? j + T/2 : img.w - 1;
+            min_h = (img.h - 1 > i + size/2) ? i + size/2 : img.h - 1;
+            min_w = (img.w - 1 > j + size/2) ? j + size/2 : img.w - 1;
 
-            for(int x = (0 > i - T/2 ? 0 : i - T/2); x <= menor_h; ++x) {
-                for(int y = (0 > j - T/2 ? 0 : j - T/2); y <= min_w; ++y) {
-                    media.r += img.pixel[x][y].r;
-                    media.g += img.pixel[x][y].g;
-                    media.b += img.pixel[x][y].b;
+            for(int x = (0 > i - size/2 ? 0 : i - size/2); x <= min_h; ++x) {
+                for(int y = (0 > j - size/2 ? 0 : j - size/2); y <= min_w; ++y) {
+                    average.r += img.pixel[x][y].r;
+                    average.g += img.pixel[x][y].g;
+                    average.b += img.pixel[x][y].b;
                 }
             }
 
-            // printf("%u", media.r)
-            media.r /= T * T;
-            media.g /= T * T;
-            media.b /= T * T;
+            average.r /= size * size;
+            average.g /= size * size;
+            average.b /= size * size;
 
-            img.pixel[i][j].r = media.r;
-            img.pixel[i][j].g = media.g;
-            img.pixel[i][j].b = media.b;
+            img.pixel[i][j].r = average.r;
+            img.pixel[i][j].g = average.g;
+            img.pixel[i][j].b = average.b;
         }
     }
-
     return img;
 }
 
 Image rotate_to_right(Image img) {
-    Image rotacionada;
+    Image rotated;
 
-    rotacionada.w = img.h;
-    rotacionada.h = img.w;
+    rotated.w = img.h;
+    rotated.h = img.w;
 
-    for (unsigned int i = 0, y = 0; i < rotacionada.h; ++i, ++y) {
-        for (int j = rotacionada.w - 1, x = 0; j >= 0; --j, ++x) {
-            rotacionada.pixel[i][j].r = img.pixel[x][y].r;
-            rotacionada.pixel[i][j].g = img.pixel[x][y].g;
-            rotacionada.pixel[i][j].b = img.pixel[x][y].b;
+    for (unsigned int i = 0, y = 0; i < rotated.h; ++i, ++y) {
+        for (int j = rotated.w - 1, x = 0; j >= 0; --j, ++x) {
+            rotated.pixel[i][j].r = img.pixel[x][y].r;
+            rotated.pixel[i][j].g = img.pixel[x][y].g;
+            rotated.pixel[i][j].b = img.pixel[x][y].b;
         }
     }
 
-    return rotacionada;
+    return rotated;
 }
 
 Image colors_reversed(Image img) {
-
     for (unsigned int i = 0; i < img.h; ++i) {
         for (unsigned int j = 0; j < img.w; ++j) {
             img.pixel[i][j].r = 255 - img.pixel[i][j].r;
@@ -266,18 +278,18 @@ Image colors_reversed(Image img) {
 }
 
 Image image_cut(Image img, int x, int y, int w, int h) {
-    Image cortada;
+    Image cropped;
 
-    cortada.w = w;
-    cortada.h = h;
+    cropped.w = w;
+    cropped.h = h;
 
     for(int i = 0; i < h; ++i) {
         for(int j = 0; j < w; ++j) {
-            cortada.pixel[i][j].r = img.pixel[i + y][j + x].r;
-            cortada.pixel[i][j].g = img.pixel[i + y][j + x].g;
-            cortada.pixel[i][j].b = img.pixel[i + y][j + x].b;
+            cropped.pixel[i][j].r = img.pixel[i + y][j + x].r;
+            cropped.pixel[i][j].g = img.pixel[i + y][j + x].g;
+            cropped.pixel[i][j].b = img.pixel[i + y][j + x].b;
         }
     }
 
-    return cortada;
+    return cropped;
 }
