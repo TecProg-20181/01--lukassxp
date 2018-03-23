@@ -13,6 +13,7 @@ typedef struct _image {
 } Image;
 
 int max(int a, int b);
+int min(int a, int b);
 int is_equal_pixel(Pixel p1, Pixel p2);
 Image gray_scale(Image img);
 Image blur(Image img, int size);
@@ -114,15 +115,15 @@ Image sepia_filter(Image img){
           pixel.b = img.pixel[x][j].b;
 
           p =  pixel.r * .393 + pixel.g * .769 + pixel.b * .189;
-          min_r = (255 >  p) ? p : 255;
+          min_r = min(255, p);
           img.pixel[x][j].r = min_r;
 
           p =  pixel.r * .349 + pixel.g * .686 + pixel.b * .168;
-          min_r = (255 >  p) ? p : 255;
+          min_r = min(255, p);
           img.pixel[x][j].g = min_r;
 
           p =  pixel.r * .272 + pixel.g * .534 + pixel.b * .131;
-          min_r = (255 >  p) ? p : 255;
+          min_r = min(255, p);
           img.pixel[x][j].b = min_r;
       }
   }
@@ -178,18 +179,6 @@ void record_image(Image img){
   return;
 }
 
-int max(int a, int b) {
-    if (a > b)
-        return a;
-    return b;
-}
-
-// int min(int a, int b) {
-//     if (a < b)
-//         return a;
-//     return b;
-// }
-
 int is_equal_pixel(Pixel p1, Pixel p2) {
     if (p1.r == p2.r &&
         p1.g == p2.g &&
@@ -197,7 +186,6 @@ int is_equal_pixel(Pixel p1, Pixel p2) {
         return 1;
     return 0;
 }
-
 
 Image gray_scale(Image img) {
     int average;
@@ -218,6 +206,18 @@ Image gray_scale(Image img) {
     return img;
 }
 
+int max(int a, int b) {
+    if (a > b)
+        return a;
+    return b;
+}
+
+int min(int a, int b) {
+    if (a > b)
+        return b;
+    return a;
+}
+
 Image blur(Image img, int size) {
     int min_h, min_w;
     //Pixel average;
@@ -226,11 +226,11 @@ Image blur(Image img, int size) {
         for (unsigned int j = 0; j < img.w; ++j) {
             Pixel average = {0, 0, 0};
 
-            min_h = (img.h - 1 > i + size/2) ? i + size/2 : img.h - 1;
-            min_w = (img.w - 1 > j + size/2) ? j + size/2 : img.w - 1;
+            min_h = min(img.h - 1, i + size/2);
+            min_w = min(img.w - 1, j + size/2);
 
-            for(int x = (0 > i - size/2 ? 0 : i - size/2); x <= min_h; ++x) {
-                for(int y = (0 > j - size/2 ? 0 : j - size/2); y <= min_w; ++y) {
+            for(int x = max(0, i - size/2); x <= min_h; ++x) {
+                for(int y = max(0, j - size/2); y <= min_w; ++y) {
                     average.r += img.pixel[x][y].r;
                     average.g += img.pixel[x][y].g;
                     average.b += img.pixel[x][y].b;
