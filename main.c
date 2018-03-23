@@ -10,6 +10,8 @@ typedef struct _image {
     Pixel pixel[512][512];
     unsigned int w;
     unsigned int h;
+    int max_scale;
+    char type[4];
 } Image;
 
 int max(int a, int b);
@@ -84,14 +86,11 @@ int main() {
 }
 
 Image read_image(Image img){
-  int max_color;
-  char p3[4];
-
   // read type of image
-  scanf("%s", p3);
+  scanf("%s", img.type);
 
   // read width height and color of image
-  scanf("%u %u %d", &img.w, &img.h, &max_color);
+  scanf("%u %u %d", &img.w, &img.h, &img.max_scale);
 
   // read all pixels of image
   for (unsigned int i = 0; i < img.h; ++i) {
@@ -162,10 +161,10 @@ Image mirroring(Image img, int horizontal){
 
 void record_image(Image img){
   // print type of image
-  printf("P3\n");
+  printf("%s", img.type);
 
   // print width height and color of image
-  printf("%u %u\n255\n", img.w, img.h);
+  printf("%u %u %d", img.w, img.h, img.max_scale);
 
   // print pixels of image
   for (unsigned int i = 0; i < img.h; ++i) {
