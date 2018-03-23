@@ -17,7 +17,8 @@ typedef struct _image {
 
 int max(int a, int b);
 int min(int a, int b);
-int is_equal_pixel(Pixel p1, Pixel p2);
+Pixel copy_pixel(Pixel pixel);
+Pixel average_of_pixel(Pixel pixel);
 Image gray_scale(Image img);
 Image blur(Image img, int size);
 Image rotate_to_right(Image img);
@@ -39,20 +40,20 @@ int main() {
         scanf("%d", &option);
 
         switch(option) {
-            case 1: { // Escala de Cinza
+            case 1: {
                 img = gray_scale(img);
                 break;
             }
-            case 2: { // Filtro Sepia
+            case 2: {
                 img = sepia_filter(img);
                 break;
             }
-            case 3: { // Blur
+            case 3: {
                 scanf("%d", &size);
                 img = blur(img, size);
                 break;
             }
-            case 4: { // Rotacao
+            case 4: {
                 scanf("%d", &rotations);
                 rotations %= 4;
                 for (int j = 0; j < rotations; ++j) {
@@ -60,16 +61,16 @@ int main() {
                 }
                 break;
             }
-            case 5: { // Espelhamento
+            case 5: {
                 scanf("%d", &horizontal);
                 img = mirroring(img, horizontal);
                 break;
             }
-            case 6: { // Inversao de Cores
+            case 6: {
                 img = colors_reversed(img);
                 break;
             }
-            case 7: { // Cortar Imagem
+            case 7: {
                 int x, y;
                 scanf("%d %d", &x, &y);
                 int w, h;
@@ -104,15 +105,32 @@ Image read_image(Image img){
   return img;
 }
 
+void record_image(Image img){
+  // print type of image
+  printf("%s\n", img.type);
+
+  // print width height and color of image
+  printf("%u %u\n%d\n", img.w, img.h, img.max_scale);
+
+  // print pixels of image
+  for (unsigned int i = 0; i < img.h; ++i) {
+      for (unsigned int j = 0; j < img.w; ++j) {
+          printf("%hu %hu %hu ", img.pixel[i][j].r,
+                                 img.pixel[i][j].g,
+                                 img.pixel[i][j].b);
+      }
+      printf("\n");
+  }
+  return;
+}
+
 Image sepia_filter(Image img){
   Pixel pixel;
   int p, min_r;
 
   for (unsigned int x = 0; x < img.h; ++x) {
       for (unsigned int j = 0; j < img.w; ++j) {
-          pixel.r = img.pixel[x][j].r;
-          pixel.g = img.pixel[x][j].g;
-          pixel.b = img.pixel[x][j].b;
+          pixel = copy_pixel(img.pixel[x][j]);
 
           p =  pixel.r * .393 + pixel.g * .769 + pixel.b * .189;
           min_r = min(255, p);
@@ -144,66 +162,37 @@ Image mirroring(Image img, int horizontal){
           if (horizontal == 1) y = img.w - 1 - j;
           else x = img.h - 1 - i;
 
-          aux.r = img.pixel[i][j].r;
-          aux.g = img.pixel[i][j].g;
-          aux.b = img.pixel[i][j].b;
-
-          img.pixel[i][j].r = img.pixel[x][y].r;
-          img.pixel[i][j].g = img.pixel[x][y].g;
-          img.pixel[i][j].b = img.pixel[x][y].b;
-
-          img.pixel[x][y].r = aux.r;
-          img.pixel[x][y].g = aux.g;
-          img.pixel[x][y].b = aux.b;
+          aux = copy_pixel(img.pixel[i][j]);
+          img.pixel[i][j] = copy_pixel(img.pixel[x][y]);
+          img.pixel[x][y] = copy_pixel(aux);
       }
   }
   return img;
 }
 
-void record_image(Image img){
-  // print type of image
-  printf("%s\n", img.type);
-
-  // print width height and color of image
-  printf("%u %u\n%d\n", img.w, img.h, img.max_scale);
-
-  // print pixels of image
-  for (unsigned int i = 0; i < img.h; ++i) {
-      for (unsigned int j = 0; j < img.w; ++j) {
-          printf("%hu %hu %hu ", img.pixel[i][j].r,
-                                 img.pixel[i][j].g,
-                                 img.pixel[i][j].b);
-      }
-      printf("\n");
-  }
-  return;
-}
-
-int is_equal_pixel(Pixel p1, Pixel p2) {
-    if (p1.r == p2.r &&
-        p1.g == p2.g &&
-        p1.b == p2.b)
-        return 1;
-    return 0;
+Pixel copy_pixel(Pixel pixel) {
+    return pixel;
 }
 
 Image gray_scale(Image img) {
-    int average;
-
     for (unsigned int i = 0; i < img.h; ++i) {
         for (unsigned int j = 0; j < img.w; ++j) {
-            average = img.pixel[i][j].r +
-                      img.pixel[i][j].g +
-                      img.pixel[i][j].b;
-
-            average /= 3;
-
-            img.pixel[i][j].r = average;
-            img.pixel[i][j].g = average;
-            img.pixel[i][j].b = average;
+            img.pixel[i][j] = average_of_pixel(img.pixel[i][j]);
         }
     }
     return img;
+}
+
+Pixel average_of_pixel(Pixel pixel){
+    int average = pixel.r + pixel.g + pixel.b;
+
+    average /= 3;
+
+    pixel.r = average;
+    pixel.g = average;
+    pixel.b = average;
+
+    return pixel;
 }
 
 int max(int a, int b) {
@@ -241,9 +230,7 @@ Image blur(Image img, int size) {
             average.g /= size * size;
             average.b /= size * size;
 
-            img.pixel[i][j].r = average.r;
-            img.pixel[i][j].g = average.g;
-            img.pixel[i][j].b = average.b;
+            img.pixel[i][j] = copy_pixel(average);
         }
     }
     return img;
@@ -259,9 +246,7 @@ Image rotate_to_right(Image img) {
 
     for (unsigned int i = 0, y = 0; i < rotated.h; ++i, ++y) {
         for (int j = rotated.w - 1, x = 0; j >= 0; --j, ++x) {
-            rotated.pixel[i][j].r = img.pixel[x][y].r;
-            rotated.pixel[i][j].g = img.pixel[x][y].g;
-            rotated.pixel[i][j].b = img.pixel[x][y].b;
+            rotated.pixel[i][j] = copy_pixel(img.pixel[x][y]);
         }
     }
 
@@ -284,12 +269,12 @@ Image image_cut(Image img, int x, int y, int w, int h) {
 
     cropped.w = w;
     cropped.h = h;
+    strcpy(cropped.type, img.type);
+    cropped.max_scale = img.max_scale;
 
     for(int i = 0; i < h; ++i) {
         for(int j = 0; j < w; ++j) {
-            cropped.pixel[i][j].r = img.pixel[i + y][j + x].r;
-            cropped.pixel[i][j].g = img.pixel[i + y][j + x].g;
-            cropped.pixel[i][j].b = img.pixel[i + y][j + x].b;
+            cropped.pixel[i][j] = copy_pixel(img.pixel[i+y][j+x]);
         }
     }
 
