@@ -161,10 +161,10 @@ Image mirroring(Image img, int horizontal){
 
 void record_image(Image img){
   // print type of image
-  printf("%s", img.type);
+  printf("%s\n", img.type);
 
   // print width height and color of image
-  printf("%u %u %d", img.w, img.h, img.max_scale);
+  printf("%u %u\n%d\n", img.w, img.h, img.max_scale);
 
   // print pixels of image
   for (unsigned int i = 0; i < img.h; ++i) {
