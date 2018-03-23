@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 typedef struct _pixel {
     unsigned short int r;
@@ -253,6 +254,8 @@ Image rotate_to_right(Image img) {
 
     rotated.w = img.h;
     rotated.h = img.w;
+    strcpy(rotated.type, img.type);
+    rotated.max_scale = img.max_scale;
 
     for (unsigned int i = 0, y = 0; i < rotated.h; ++i, ++y) {
         for (int j = rotated.w - 1, x = 0; j >= 0; --j, ++x) {
